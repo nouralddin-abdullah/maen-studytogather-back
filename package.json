@@ -1,7 +1,7 @@
 {
-  "name": "nestjs-template",
+  "name": "maen-backend",
   "version": "1.0.0",
-  "description": "🚀 Production-ready NestJS API template with TypeORM, Zod validation, Passport (JWT & Google OAuth), Cloud Storage (S3/R2), Pino logging, Docker, PostgreSQL, and CI/CD - scaffold your next API in minutes!",
+  "description": "Backend of maen for study app togather",
   "author": "",
   "private": true,
   "license": "MIT",
