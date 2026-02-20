@@ -5,7 +5,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Role } from '@shared/types';
+import {Role,Field, Sex} from '@shared/types/index'
 
 @Entity()
 export class User {
@@ -18,6 +18,15 @@ export class User {
   @Column({ unique: true })
   username: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  field: Field | null;
+
+  @Column({ type: 'char', length: 2, nullable: true })
+  country: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  gender: Sex | null;
+  
   @Column()
   nickName: string;
 

@@ -13,7 +13,7 @@ import { UsersService } from './users.service';
 import { User } from '../entities/user.entity';
 
 // Shared imports
-import { TokenResponse, JwtPayload } from '@shared/types';
+import { TokenResponse, JwtPayload, Field, Sex } from '@shared/types';
 
 // Core imports
 import { secrets } from '@core/config';
@@ -43,6 +43,9 @@ export class AuthService {
     password: string,
     nickName: string,
     avatarFile?: { buffer: Buffer; originalname: string; mimetype: string },
+    country?: string | null,
+    field?: Field | null,
+    gender?: Sex | null
   ): Promise<TokenResponse> {
     // hash the password
     const hashedPassword = await this.hashPassword(password);
@@ -57,6 +60,9 @@ export class AuthService {
       nickName,
       hashedPassword,
       avatarFile,
+      country,
+      field,
+      gender
     );
 
     // return JWT token

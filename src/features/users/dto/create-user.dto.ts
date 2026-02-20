@@ -1,5 +1,6 @@
+import { Field, Sex } from '@shared/types';
 import { createZodDto } from 'nestjs-zod';
-import z from 'zod';
+import {z} from 'zod';
 
 const createUserSchema = z.object({
   email: z.string().email('Invalid email format'),
@@ -11,6 +12,20 @@ const createUserSchema = z.object({
       /^[a-zA-Z0-9_]+$/,
       'Username can only contain letters, numbers, and underscores',
     ),
+  country: z
+  .string()
+  .length(2, 'The max length of country must be two characters')
+  .toUpperCase()
+  .optional()
+  .nullable(),
+  gender: z
+  .enum(Sex, {message:'Gender must be male or female'})
+  .optional()
+  .nullable(),
+  field: z
+  .enum(Field, {message: 'field must be a list of avaliable fields only'})
+  .optional()
+  .nullable(),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')

@@ -76,6 +76,9 @@ export class UsersController {
             mimetype: file.mimetype,
           }
         : undefined,
+      body.country,
+      body.field,
+      body.gender,
     );
     return {
       success: true,

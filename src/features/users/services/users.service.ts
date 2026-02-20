@@ -19,6 +19,7 @@ import {
 
 // Other feature imports
 import { StorageService } from '@features/storage';
+import { Field, Sex } from '@shared/types/index';
 
 @Injectable()
 export class UsersService {
@@ -34,6 +35,9 @@ export class UsersService {
     nickName: string,
     password: string,
     avatarFile?: { buffer: Buffer; originalname: string; mimetype: string },
+    country?: string | null,
+    field?: Field | null,
+    gender?: Sex | null
   ): Promise<User> {
     // duplicate email?
     if (await this.findOneByEmail(email)) {
@@ -51,6 +55,9 @@ export class UsersService {
       username,
       nickName,
       password,
+      country,
+      field,
+      gender
     });
     // now we upload the file if provided
     if (avatarFile) {
