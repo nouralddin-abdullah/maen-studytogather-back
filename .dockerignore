@@ -1,0 +1,38 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Build output
+dist
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Environment files (use docker-compose env instead)
+.env
+.env.*
+!.env.example
+
+# Test files
+coverage
+test
+*.spec.ts
+
+# Database files (use volumes instead)
+*.sqlite
+
+# Documentation
+README.md
+docs
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore

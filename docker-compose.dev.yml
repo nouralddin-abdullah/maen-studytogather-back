@@ -1,0 +1,80 @@
+# ===========================================
+# DEVELOPMENT - With Hot Reload
+# ===========================================
+# PostgreSQL + Redis + API with live code reloading
+#
+# Usage: docker compose -f docker-compose.dev.yml up --build
+# ===========================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nestjs-postgres-dev
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_DATABASE:-nestjs_db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-nestjs_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: nestjs-redis-dev
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data-dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: nestjs-api-dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data-dev:
+    driver: local
+  redis-data-dev:
+    driver: local

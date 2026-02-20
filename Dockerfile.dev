@@ -1,0 +1,16 @@
+# development Dockerfile with hot-reload
+FROM node:20-alpine
+
+WORKDIR /app
+
+# install dependencies
+COPY package*.json ./
+RUN npm install
+
+# copy source (will be overwritten by volume mount)
+COPY . .
+
+EXPOSE 3000
+
+# run in development mode with watch
+CMD ["npm", "run", "start:dev"]
