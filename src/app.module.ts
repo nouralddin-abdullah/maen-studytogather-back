@@ -20,12 +20,14 @@ import { MailModule, MailProviderType } from './features/mail';
 // App components
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { RoomsModule } from '@features/rooms/rooms.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
     // Core module - provides global guards, decorators, database, config
     CoreModule,
-
+    EventEmitterModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true, // avaliable everywhere you don't have to add it to each module
       envFilePath: '.env',
@@ -160,6 +162,7 @@ import { AppService } from './app.service';
 
     PassportModule,
     UsersModule,
+    RoomsModule,
     HealthModule,
   ],
   controllers: [AppController],

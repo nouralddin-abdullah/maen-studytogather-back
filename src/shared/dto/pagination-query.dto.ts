@@ -16,7 +16,7 @@ const paginationQuerySchema = z.object({
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().min(1).max(100)),
 
-  sortBy: z.string().optional().default('createdAt'),
+  sortBy: z.string().optional().default('currentNumParticipents'),
 
   order: z.enum(['asc', 'desc']).optional().default('desc'),
 

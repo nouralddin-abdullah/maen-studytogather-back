@@ -2,10 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import {Role,Field, Sex} from '@shared/types/index'
+import { Role, Field, Sex } from '@shared/types/index';
+import { StudySession } from '@features/rooms/entities/study-session.entity';
 
 @Entity()
 export class User {
@@ -26,7 +28,7 @@ export class User {
 
   @Column({ type: 'varchar', nullable: true })
   gender: Sex | null;
-  
+
   @Column()
   nickName: string;
 
@@ -50,4 +52,16 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ default: 0 })
+  currentStreak: number;
+
+  @Column({ default: 0 })
+  longestStreak: number;
+
+  @Column({ type: 'date', default: 0, nullable: true })
+  lastStudyDate: Date | null;
+
+  @OneToMany(() => StudySession, (session) => session.user)
+  studySessions: StudySession[];
 }
