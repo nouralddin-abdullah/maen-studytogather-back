@@ -1,12 +1,13 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { StudySessionStatus } from '../enums/study-session.enums';
-import { User } from '@features/users';
+import { User } from '@features/users/entities/user.entity';
 import { Room } from './room.entity';
 
 @Entity()
@@ -17,10 +18,12 @@ export class StudySession {
   @Column({ default: StudySessionStatus.ACTIVE })
   status: StudySessionStatus;
 
-  @Column({ default: Date.now })
+  @CreateDateColumn({
+    type: 'timestamp with time zone',
+  })
   joinedAt: Date;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'timestamp with time zone', nullable: true })
   leftAt: Date | null;
 
   @Column({ default: 0 })

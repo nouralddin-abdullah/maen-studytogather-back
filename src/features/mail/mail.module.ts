@@ -68,21 +68,8 @@ export class MailModule {
     const providers: Provider[] = [configProvider, mailProvider, MailService];
 
     if (queueEnabled) {
-      // Add BullMQ with Redis when queue is enabled
-      const redisConfig = secrets.redis;
-      this.logger.log(
-        `Connecting to Redis at ${redisConfig.host}:${redisConfig.port}`,
-      );
-
+      // Register the mail queue (BullModule.forRoot is in AppModule)
       imports.push(
-        BullModule.forRoot({
-          connection: {
-            host: redisConfig.host,
-            port: redisConfig.port,
-            username: redisConfig.username,
-            password: redisConfig.password || undefined,
-          },
-        }),
         BullModule.registerQueue({
           name: MAIL_QUEUE,
         }),

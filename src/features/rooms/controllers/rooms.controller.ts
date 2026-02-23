@@ -6,6 +6,8 @@ import {
   Patch,
   Post,
   Query,
+  Req,
+  Sse,
 } from '@nestjs/common';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { RoomsService } from '../services/rooms.service';
@@ -27,6 +29,9 @@ import { RoomDTO } from '../dto/room.dto';
 import { CreateRoomSwaggerDto } from '../swagger/create-room-swagger.dto';
 import { UpdateRoomDto } from '../dto/update-room.dto';
 import { JoinRoomDto } from '../dto/join-room.dto';
+import { Observable } from 'rxjs';
+import type { Request } from 'express';
+import { UpdatePomodoroDto } from '../dto/update-pomodoro.dto';
 
 @ApiTags('Rooms')
 @Controller('rooms')
@@ -88,13 +93,71 @@ export class RoomsController {
   }
 
   @Post('join/:inviteCode')
-  @Serialize(ApiResponseDTO)
   async joinRoom(
     @Param('inviteCode') inviteCode: string,
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: JoinRoomDto,
+    @Body() body?: JoinRoomDto,
   ) {
     const userId = user.userId;
-    return await this.roomsService.join(inviteCode, body.passCode, userId);
+    return await this.roomsService.join(inviteCode, body?.passCode, userId);
+  }
+
+  @Post('leave')
+  async leaveRoom(@CurrentUser() user: AuthenticatedUser) {
+    return await this.roomsService.leave(user.userId);
+  }
+
+  @Sse('sse/:roomId')
+  connectToRoom(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('roomId') roomId: string,
+    @Req() req: Request,
+  ): Observable<MessageEvent> {
+    req.on('close', () => {
+      this.roomsService.handleUserDisconnect(user.userId);
+    });
+
+    return this.roomsService.subscribeToRoomEvents(roomId);
+  }
+
+  @Post(':roomId/start-timer')
+  async startTimer(
+    @Param('roomId') roomId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return await this.roomsService.startTimer(roomId, user.userId);
+  }
+
+  @Post(':roomId/pause-timer')
+  async pauseTimer(
+    @Param('roomId') roomId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return await this.roomsService.pauseTimer(roomId, user.userId);
+  }
+
+  @Post(':roomId/resume-timer')
+  async resumeTimer(
+    @Param('roomId') roomId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return await this.roomsService.resumeTimer(roomId, user.userId);
+  }
+
+  @Post(':roomId/restart-timer')
+  async restartTimer(
+    @Param('roomId') roomId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return await this.roomsService.restartTimer(roomId, user.userId);
+  }
+
+  @Patch(':roomId/change-pomodoro')
+  async changePomodoro(
+    @Param('roomId') roomId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: UpdatePomodoroDto,
+  ) {
+    return await this.roomsService.changePomodoro(roomId, user.userId, body);
   }
 }

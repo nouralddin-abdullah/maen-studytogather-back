@@ -59,7 +59,7 @@ export class User {
   @Column({ default: 0 })
   longestStreak: number;
 
-  @Column({ type: 'date', default: 0, nullable: true })
+  @Column({ type: 'date', nullable: true, default: null })
   lastStudyDate: Date | null;
 
   @OneToMany(() => StudySession, (session) => session.user)

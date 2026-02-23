@@ -22,12 +22,26 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { RoomsModule } from '@features/rooms/rooms.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { BullModule } from '@nestjs/bullmq';
+import { secrets } from '@core/config';
 
 @Module({
   imports: [
     // Core module - provides global guards, decorators, database, config
     CoreModule,
     EventEmitterModule.forRoot(),
+
+    // BullMQ (Redis) — single global connection shared by all feature queues
+    // Feature modules use BullModule.registerQueue() to declare their own queues
+    BullModule.forRoot({
+      connection: {
+        host: secrets.redis.host,
+        port: secrets.redis.port,
+        username: secrets.redis.username,
+        password: secrets.redis.password || undefined,
+      },
+    }),
+
     ConfigModule.forRoot({
       isGlobal: true, // avaliable everywhere you don't have to add it to each module
       envFilePath: '.env',

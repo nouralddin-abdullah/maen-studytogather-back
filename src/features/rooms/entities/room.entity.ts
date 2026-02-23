@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { AmbientSound, RoomTheme, TimerPhase } from '../enums/rooms.enums';
-import { User } from '@features/users';
+import { User } from '@features/users/entities/user.entity';
 import { StudySession } from './study-session.entity';
 
 @Entity()
@@ -51,6 +51,9 @@ export class Room {
   @Column({ default: 50 })
   focusDuration: number;
 
+  @Column({ type: 'int', nullable: true })
+  pauseRemainingMs: number | null;
+
   @Column({ default: 10 })
   breakDuration: number;
 
@@ -58,7 +61,7 @@ export class Room {
   currentPhase: TimerPhase;
 
   @Column({ type: 'timestamp with time zone', nullable: true })
-  timerEndAt: Date;
+  timerEndAt: Date | null;
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt: Date;

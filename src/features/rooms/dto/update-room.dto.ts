@@ -34,14 +34,6 @@ const updateRoomSchema = z
       .min(2, 'Min capacity is 2')
       .max(20, 'Max capacity is 20')
       .default(10),
-    focusDuration: z.coerce
-      .number()
-      .max(360, 'Max focus duration is 360 mins.')
-      .min(5, ',Min focus duration is 5 mins'),
-    breakDuration: z.coerce
-      .number()
-      .max(360, 'Max break duration is 360 mins.')
-      .min(5, 'Min break duration is 5 mins'),
   })
   .partial();
 
