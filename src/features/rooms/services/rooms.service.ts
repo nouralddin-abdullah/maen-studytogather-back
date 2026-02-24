@@ -82,11 +82,19 @@ export class RoomsService {
   async getDiscovery(query: PaginationQuery): Promise<PaginatedResponse<Room>> {
     const { page, limit, sortBy, order } = query;
 
-    const [data, total] = await this.roomRepo.findAndCount({
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { [sortBy]: order.toUpperCase() as 'ASC' | 'DESC' },
-    });
+    const [rooms, total] = await this.roomRepo
+      .createQueryBuilder('room')
+      .addSelect('room.passCode')
+      .leftJoinAndSelect('room.host', 'host')
+      .orderBy(`room.${sortBy}`, order.toUpperCase() as 'ASC' | 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    const data = rooms.map((room) => ({
+      ...room,
+      hasPassCode: !!room.passCode,
+    }));
 
     return createPaginatedResponse(data, total, page, limit);
   }

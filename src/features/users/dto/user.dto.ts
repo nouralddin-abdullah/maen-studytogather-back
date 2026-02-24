@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { Role } from '@shared/types';
+import { Role, Sex, Field } from '@shared/types/index';
 
 export class UserDTO {
   @Expose()
@@ -19,4 +19,16 @@ export class UserDTO {
 
   @Expose()
   role: Role;
+
+  @Expose()
+  field: Field;
+
+  @Expose()
+  country: string;
+
+  @Expose()
+  longestStreak: number;
+
+  @Expose()
+  gender: Sex;
 }

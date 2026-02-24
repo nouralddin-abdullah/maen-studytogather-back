@@ -61,10 +61,10 @@ export class RoomsController {
     };
   }
 
-  // get all users (paginated)
-  @Serialize(ApiResponseDTO(RoomDTO))
+  // get all rooms (paginated)
+  @Serialize(PaginatedResponseDTO(RoomDTO))
   @Get('discover')
-  async getUsers(@Query() query: PaginationQueryDto) {
+  async getDiscoverRooms(@Query() query: PaginationQueryDto) {
     return await this.roomsService.getDiscovery(query);
   }
 

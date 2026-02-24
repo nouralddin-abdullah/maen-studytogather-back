@@ -1,5 +1,16 @@
-import { Expose } from 'class-transformer';
-import { AmbientSound, RoomTheme } from '../enums/rooms.enums';
+import { Expose, Type } from 'class-transformer';
+import { AmbientSound, RoomTheme, TimerPhase } from '../enums/rooms.enums';
+
+export class RoomHostDTO {
+  @Expose()
+  username: string;
+
+  @Expose()
+  nickName: string;
+
+  @Expose()
+  avatar: string;
+}
 
 export class RoomDTO {
   @Expose()
@@ -39,7 +50,17 @@ export class RoomDTO {
   breakDuration: number;
 
   @Expose()
+  hasPassCode: boolean;
+
+  @Expose()
+  currentPhase: TimerPhase;
+
+  @Expose()
   hostId: string;
+
+  @Expose()
+  @Type(() => RoomHostDTO)
+  host: RoomHostDTO;
 
   @Expose()
   createdAt: Date;
