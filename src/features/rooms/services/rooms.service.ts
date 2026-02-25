@@ -30,6 +30,10 @@ import {
   RoomTimerJobName,
 } from '../constants/rooms.constants';
 import { Queue } from 'bullmq';
+import {
+  USER_STATS_QUEUE,
+  UserStatsJobName,
+} from '@features/users/constants/user-stats.constants';
 
 @Injectable()
 export class RoomsService {
@@ -43,6 +47,7 @@ export class RoomsService {
     private storageService: StorageService,
     private userService: UsersService,
     private eventEmitter: EventEmitter2,
+    @InjectQueue(USER_STATS_QUEUE) private userStatsQueue: Queue,
   ) {}
 
   async findOne(id: string) {
@@ -281,6 +286,7 @@ export class RoomsService {
     }
 
     const room = activeSession.room;
+    let earnedMinutes = 0;
 
     if (
       room.currentPhase === TimerPhase.FOCUS &&
@@ -291,7 +297,7 @@ export class RoomsService {
         activeSession.joinedAt.getTime(),
         room.phaseStartedAt.getTime(),
       );
-      const earnedMinutes = Math.floor((now - effectiveStart) / 60_000);
+      earnedMinutes = Math.floor((now - effectiveStart) / 60_000);
 
       if (earnedMinutes > 0) {
         activeSession.totalFocusMinutes += earnedMinutes;
@@ -301,6 +307,12 @@ export class RoomsService {
     activeSession.leftAt = new Date();
 
     await this.sessionRepo.save(activeSession);
+    await this.userStatsQueue.add(UserStatsJobName.SESSION_COMPLETED, {
+      userId: activeSession.userId,
+      earnedMinutes: earnedMinutes,
+      sessionId: activeSession.id,
+      incrementSession: true,
+    });
     await this.roomRepo.decrement({ id: room.id }, 'currentNumParticipents', 1);
     this.eventEmitter.emit(`room.updated.${room.id}`, {
       type: 'USER_LEFT',
@@ -409,6 +421,12 @@ export class RoomsService {
       if (earnedMinutes > 0) {
         session.totalFocusMinutes =
           (session.totalFocusMinutes || 0) + earnedMinutes;
+        await this.userStatsQueue.add(UserStatsJobName.SESSION_COMPLETED, {
+          userId: session.userId,
+          earnedMinutes: earnedMinutes,
+          sessionId: session.id,
+          incrementSession: false,
+        });
       }
     }
     await this.sessionRepo.save(activeSessions); // Bulk save!

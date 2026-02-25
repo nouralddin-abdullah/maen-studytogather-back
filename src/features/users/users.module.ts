@@ -17,10 +17,17 @@ import { User } from './entities/user.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { DailyStudyLog } from './entities/daily-study-log.entity';
+import { BullModule } from '@nestjs/bullmq';
+import { USER_STATS_QUEUE } from './constants/user-stats.constants';
+import { UserStatsProcessor } from './services/user-stats.processor';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, DailyStudyLog]),
+    BullModule.registerQueue({
+      name: USER_STATS_QUEUE,
+    }),
     // JWT with async config from environment
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -40,6 +47,7 @@ import { GoogleStrategy } from './strategies/google.strategy';
     LocalStrategy,
     JwtStrategy,
     GoogleStrategy,
+    UserStatsProcessor,
   ],
   exports: [UsersService, AuthService],
 })

@@ -12,6 +12,10 @@ import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TimerPhase } from '../enums/rooms.enums';
 import { StudySessionStatus } from '../enums/study-session.enums';
+import {
+  USER_STATS_QUEUE,
+  UserStatsJobName,
+} from '@features/users/constants/user-stats.constants';
 
 @Processor(ROOM_TIMER_QUEUE)
 @Injectable()
@@ -24,6 +28,7 @@ export class RoomTimerProcessor extends WorkerHost {
     private sessionRepo: Repository<StudySession>,
     private eventEmitter: EventEmitter2,
     @InjectQueue(ROOM_TIMER_QUEUE) private roomTimerQueue: Queue,
+    @InjectQueue(USER_STATS_QUEUE) private userStatsQueue: Queue,
   ) {
     super();
   }
@@ -56,6 +61,12 @@ export class RoomTimerProcessor extends WorkerHost {
         if (earnedMinutes > 0) {
           session.totalFocusMinutes =
             (session.totalFocusMinutes || 0) + earnedMinutes;
+          await this.userStatsQueue.add(UserStatsJobName.SESSION_COMPLETED, {
+            userId: session.userId,
+            earnedMinutes: earnedMinutes,
+            sessionId: session.id,
+            incrementSession: false,
+          });
         }
       }
       if (activeSessions.length > 0) {

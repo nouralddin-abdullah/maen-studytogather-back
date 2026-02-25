@@ -20,6 +20,8 @@ import {
   CurrentUser,
   ImageUpload,
   UploadedImage,
+  MultiImageUpload,
+  UploadedImages,
   FileSizes,
   Roles,
 } from '@core/decorators';
@@ -111,22 +113,37 @@ export class UsersController {
   // update current user
   @Patch('/me')
   @ApiConsumes('multipart/form-data')
-  @ImageUpload('avatar')
+  @MultiImageUpload([
+    { name: 'avatar', maxCount: 1 },
+    { name: 'profileBackground', maxCount: 1 },
+  ])
   @ApiBody({ type: UpdateMeSwaggerDto })
   async updateCurrentUser(
     @CurrentUser('userId') userId: string,
     @Body() body: UpdateUserDTO,
-    @UploadedImage({ required: false, maxSize: FileSizes.MB(5) })
-    file?: Express.Multer.File,
+    @UploadedImages([
+      { name: 'avatar', maxSize: FileSizes.MB(5) },
+      { name: 'profileBackground', maxSize: FileSizes.MB(5) },
+    ])
+    files: Record<string, Express.Multer.File | undefined>,
   ) {
+    const avatarFile = files.avatar;
+    const profileBackgroundFile = files.profileBackground;
     await this.usersService.update(
       userId,
       body,
-      file
+      avatarFile
         ? {
-            buffer: file.buffer,
-            originalname: file.originalname,
-            mimetype: file.mimetype,
+            buffer: avatarFile.buffer,
+            originalname: avatarFile.originalname,
+            mimetype: avatarFile.mimetype,
+          }
+        : undefined,
+      profileBackgroundFile
+        ? {
+            buffer: profileBackgroundFile.buffer,
+            originalname: profileBackgroundFile.originalname,
+            mimetype: profileBackgroundFile.mimetype,
           }
         : undefined,
     );
@@ -218,5 +235,16 @@ export class UsersController {
 
     // option 2: return JSON directly (uncomment if you prefer this)
     // return { success: true, message: 'Google login successful', data: token };
+  }
+
+  @Get(':id/heatmap')
+  async getHeatmap(
+    @Param('id') userId: string,
+    @Query('year') yearQuery?: string,
+  ) {
+    const currentYear = new Date().getFullYear();
+    const targetYear = yearQuery ? parseInt(yearQuery, 10) : currentYear;
+
+    return await this.usersService.getHeatmap(userId, targetYear);
   }
 }

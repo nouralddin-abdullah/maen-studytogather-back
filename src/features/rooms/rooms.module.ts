@@ -8,13 +8,16 @@ import { StudySession } from './entities/study-session.entity';
 import { UsersModule } from '@features/users';
 import { ROOM_TIMER_QUEUE } from './constants/rooms.constants';
 import { RoomTimerProcessor } from './services/room-timer.processor';
+import { USER_STATS_QUEUE } from '@features/users/constants/user-stats.constants';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Room]),
-    TypeOrmModule.forFeature([StudySession]),
+    TypeOrmModule.forFeature([Room, StudySession]),
     UsersModule,
-    BullModule.registerQueue({ name: ROOM_TIMER_QUEUE }),
+    BullModule.registerQueue(
+      { name: ROOM_TIMER_QUEUE },
+      { name: USER_STATS_QUEUE },
+    ),
   ],
   providers: [RoomsService, RoomTimerProcessor],
   controllers: [RoomsController],

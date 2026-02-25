@@ -2,11 +2,18 @@ import {
   applyDecorators,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles as NestUploadedFiles,
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  createParamDecorator,
+  ExecutionContext,
+  BadRequestException,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  FileInterceptor,
+  FileFieldsInterceptor,
+} from '@nestjs/platform-express';
 
 // default configs
 const DEFAULT_MAX_SIZE = 5 * 1024 * 1024; // 5mb
@@ -31,6 +38,27 @@ export interface UploadedImageOptions {
  */
 export function ImageUpload(fieldName: string, options?: UploadedImageOptions) {
   return applyDecorators(UseInterceptors(FileInterceptor(fieldName)));
+}
+
+export interface MultiImageField {
+  // form field name
+  name: string;
+  // max number of files for this field (default: 1)
+  maxCount?: number;
+}
+
+/**
+ * opener decorator that combines FileFieldsInterceptor for multiple file fields
+ * usage: @MultiImageUpload([{ name: 'avatar' }, { name: 'background' }])
+ */
+export function MultiImageUpload(fields: MultiImageField[]) {
+  return applyDecorators(
+    UseInterceptors(
+      FileFieldsInterceptor(
+        fields.map((f) => ({ name: f.name, maxCount: f.maxCount ?? 1 })),
+      ),
+    ),
+  );
 }
 
 /**
@@ -62,6 +90,62 @@ export function UploadedImage(options?: UploadedImageOptions) {
       fileIsRequired: required,
     }),
   );
+}
+
+export interface UploadedImagesField {
+  // form field name
+  name: string;
+  // if this file is required (default: false)
+  required?: boolean;
+  // max file size in bytes (default: 5mb)
+  maxSize?: number;
+  // Allowed MIME types as regex (default: jpeg, png, gif, webp)
+  fileType?: RegExp;
+}
+
+/**
+ * inspector decorator for extracting and validating multiple uploaded images
+ * usage: @UploadedImages([{ name: 'avatar', maxSize: FileSizes.MB(5) }, { name: 'background' }])
+ * returns: Record<string, Express.Multer.File | undefined>
+ */
+export function UploadedImages(fields: UploadedImagesField[]) {
+  return createParamDecorator((_data: unknown, ctx: ExecutionContext) => {
+    const req = ctx.switchToHttp().getRequest();
+    const files: Record<string, Express.Multer.File[]> = req.files || {};
+    const result: Record<string, Express.Multer.File | undefined> = {};
+
+    for (const field of fields) {
+      const {
+        name,
+        required = false,
+        maxSize = DEFAULT_MAX_SIZE,
+        fileType = DEFAULT_IMAGE_TYPES,
+      } = field;
+
+      const file = files[name]?.[0];
+
+      if (!file && required) {
+        throw new BadRequestException(`File '${name}' is required`);
+      }
+
+      if (file) {
+        if (file.size > maxSize) {
+          throw new BadRequestException(
+            `File '${name}' must be less than ${formatBytes(maxSize)}`,
+          );
+        }
+        if (!fileType.test(file.mimetype)) {
+          throw new BadRequestException(
+            `File '${name}' has an invalid file type`,
+          );
+        }
+      }
+
+      result[name] = file;
+    }
+
+    return result;
+  })();
 }
 
 // helper function to format sizes in readable formats

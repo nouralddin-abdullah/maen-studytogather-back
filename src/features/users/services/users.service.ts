@@ -20,12 +20,14 @@ import {
 // Other feature imports
 import { StorageService } from '@features/storage';
 import { Field, Sex } from '@shared/types/index';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     private storageService: StorageService,
+    private dataSource: DataSource,
   ) {}
 
   //create user
@@ -37,7 +39,7 @@ export class UsersService {
     avatarFile?: { buffer: Buffer; originalname: string; mimetype: string },
     country?: string | null,
     field?: Field | null,
-    gender?: Sex | null
+    gender?: Sex | null,
   ): Promise<User> {
     // duplicate email?
     if (await this.findOneByEmail(email)) {
@@ -57,7 +59,7 @@ export class UsersService {
       password,
       country,
       field,
-      gender
+      gender,
     });
     // now we upload the file if provided
     if (avatarFile) {
@@ -110,6 +112,11 @@ export class UsersService {
     id: string,
     attrs: Partial<User>,
     avatarFile?: { buffer: Buffer; originalname: string; mimetype: string },
+    profileBackgroundFile?: {
+      buffer: Buffer;
+      originalname: string;
+      mimetype: string;
+    },
   ): Promise<User> {
     const user = await this.findOne(id);
     if (!user) {
@@ -124,6 +131,15 @@ export class UsersService {
         contentType: avatarFile.mimetype,
       });
       user.avatar = result.url;
+    }
+    if (profileBackgroundFile) {
+      const key = `profile-backgrounds/${user.id}-${Date.now()}`;
+      const result = await this.storageService.upload({
+        key,
+        body: profileBackgroundFile.buffer,
+        contentType: profileBackgroundFile.mimetype,
+      });
+      user.profileBackgroundUrl = result.url;
     }
 
     // save it now
@@ -174,5 +190,39 @@ export class UsersService {
     });
 
     return await this.userRepo.save(user);
+  }
+
+  async getHeatmap(userId: string, targetYear: number) {
+    const user = await this.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const startDate = `${targetYear}-01-01`;
+    const endDate = `${targetYear}-12-31`;
+    const rawData = await this.dataSource.query(
+      `
+      SELECT 
+        to_char(d.date, 'YYYY-MM-DD') AS "date", 
+        COALESCE(log."totalMinutes", 0) AS "minutes"
+      FROM generate_series(
+        $2::date, -- Start Date (Jan 1st)
+        $3::date, -- End Date (Dec 31st)
+        '1 day'::interval
+      ) AS d(date)
+      LEFT JOIN "daily_study_log" log 
+        ON log."userId" = $1 AND log."date" = d.date::date
+      ORDER BY d.date ASC;
+      `,
+      [userId, startDate, endDate],
+    );
+    const formattedData = rawData.map((row: any) => ({
+      date: row.date,
+      minutes: Number(row.minutes),
+    }));
+
+    return {
+      year: targetYear,
+      data: formattedData,
+    };
   }
 }
