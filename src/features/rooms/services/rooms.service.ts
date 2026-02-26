@@ -21,7 +21,7 @@ import { StudySessionStatus } from '../enums/study-session.enums';
 import { TimerPhase } from '../enums/rooms.enums';
 import { UsersService } from '@features/users';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Observable, fromEvent } from 'rxjs';
+import { Observable, fromEvent, interval, merge, of } from 'rxjs';
 import { map, finalize } from 'rxjs/operators';
 import { Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -284,61 +284,104 @@ export class RoomsService {
     });
 
     if (!activeSession) {
-      throw new NotFoundException('No active session found');
+      return {
+        message: 'Already left the room',
+        alreadyLeft: true,
+      };
     }
 
     const room = activeSession.room;
     let earnedMinutes = 0;
+    const now = new Date();
 
     if (
       room.currentPhase === TimerPhase.FOCUS &&
       room.phaseStartedAt !== null
     ) {
-      const now = Date.now();
       const effectiveStart = Math.max(
         activeSession.joinedAt.getTime(),
         room.phaseStartedAt.getTime(),
       );
-      earnedMinutes = Math.floor((now - effectiveStart) / 60_000);
-
-      if (earnedMinutes > 0) {
-        activeSession.totalFocusMinutes += earnedMinutes;
-      }
+      earnedMinutes = Math.floor((now.getTime() - effectiveStart) / 60_000);
     }
-    activeSession.status = StudySessionStatus.COMPELETED;
-    activeSession.leftAt = new Date();
 
-    await this.sessionRepo.save(activeSession);
+    const newTotalMinutes =
+      (activeSession.totalFocusMinutes || 0) +
+      (earnedMinutes > 0 ? earnedMinutes : 0);
+
+    // 👇 2. THE ATOMIC UPDATE (The Race Condition Killer)
+    const updateResult = await this.sessionRepo.update(
+      {
+        id: activeSession.id,
+        status: StudySessionStatus.ACTIVE,
+      },
+      {
+        status: StudySessionStatus.COMPELETED,
+        leftAt: now,
+        totalFocusMinutes: newTotalMinutes,
+      },
+    );
+
+    if (updateResult.affected === 0) {
+      this.logger.debug(
+        `User ${userId} lost the race condition. Session already closed.`,
+      );
+      return {
+        message: 'Already left the room',
+        alreadyLeft: true,
+      };
+    }
+
     await this.userStatsQueue.add(UserStatsJobName.SESSION_COMPLETED, {
       userId: activeSession.userId,
-      earnedMinutes: earnedMinutes,
+      earnedMinutes: earnedMinutes > 0 ? earnedMinutes : 0,
       sessionId: activeSession.id,
       incrementSession: true,
     });
+
     await this.roomRepo.decrement({ id: room.id }, 'currentNumParticipents', 1);
+
     this.eventEmitter.emit(`room.updated.${room.id}`, {
       type: 'USER_LEFT',
       payload: {
         userId,
-        totalFocusMinutes: activeSession.totalFocusMinutes,
+        totalFocusMinutes: newTotalMinutes,
       },
     });
 
     return {
       message: 'Left the room successfully',
       roomId: room.id,
-      totalFocusMinutes: activeSession.totalFocusMinutes,
+      totalFocusMinutes: newTotalMinutes,
     };
   }
 
   subscribeToRoomEvents(roomId: string): Observable<MessageEvent> {
-    return fromEvent(this.eventEmitter, `room.updated.${roomId}`).pipe(
+    const initialEvent$ = of({
+      data: { type: 'CONNECTED', payload: { roomId } },
+    } as MessageEvent);
+
+    const heartbeat$ = interval(30_000).pipe(
+      map(
+        () =>
+          ({
+            data: { type: 'HEARTBEAT', payload: { timestamp: Date.now() } },
+          }) as MessageEvent,
+      ),
+    );
+
+    const roomEvents$ = fromEvent(
+      this.eventEmitter,
+      `room.updated.${roomId}`,
+    ).pipe(
       map((data) => {
         return {
           data: data,
         } as MessageEvent;
       }),
     );
+
+    return merge(initialEvent$, heartbeat$, roomEvents$);
   }
 
   async handleUserDisconnect(userId: string): Promise<void> {
