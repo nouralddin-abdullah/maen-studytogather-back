@@ -85,7 +85,7 @@ export class RoomTimerProcessor extends WorkerHost {
         { roomId, phase: TimerPhase.BREAK },
         {
           delay: room.breakDuration * 60000,
-          jobId: `timer-${roomId}`,
+          jobId: `timer-${roomId}-break`,
           removeOnComplete: true,
         },
       );
@@ -113,7 +113,7 @@ export class RoomTimerProcessor extends WorkerHost {
         { roomId, phase: TimerPhase.FOCUS },
         {
           delay: room.focusDuration * 60000,
-          jobId: `timer-${roomId}`,
+          jobId: `timer-${roomId}-focus`,
           removeOnComplete: true,
         },
       );

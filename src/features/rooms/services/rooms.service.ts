@@ -204,6 +204,7 @@ export class RoomsService {
             maxCapacity: room.maxCapacity,
             focusDuration: room.focusDuration,
             pauseRemainingMs: room.pauseRemainingMs,
+            wallPaperUrl: room.wallPaperUrl,
             breakDuration: room.breakDuration,
             currentPhase: room.currentPhase,
             timerEndAt: room.timerEndAt,
@@ -264,6 +265,7 @@ export class RoomsService {
         inviteCode: room.inviteCode,
         maxCapacity: room.maxCapacity,
         focusDuration: room.focusDuration,
+        wallPaperUrl: room.wallPaperUrl,
         pauseRemainingMs: room.pauseRemainingMs,
         breakDuration: room.breakDuration,
         currentPhase: room.currentPhase,
@@ -378,7 +380,7 @@ export class RoomsService {
       },
       {
         delay: room.focusDuration * 60000,
-        jobId: `timer-${roomId}`,
+        jobId: `timer-${roomId}-focus`,
         removeOnComplete: true,
       },
     );
@@ -432,7 +434,7 @@ export class RoomsService {
     await this.sessionRepo.save(activeSessions); // Bulk save!
 
     // 2. Assassinate the pending BullMQ job (No DB lookup needed!)
-    await this.roomTimerQueue.remove(`timer-${room.id}`);
+    await this.roomTimerQueue.remove(`timer-${room.id}-focus`);
 
     // 3. Update Room State
     room.currentPhase = TimerPhase.PAUSED;
@@ -470,7 +472,11 @@ export class RoomsService {
     await this.roomTimerQueue.add(
       RoomTimerJobName.PHASE_END,
       { roomId: room.id, phase: TimerPhase.FOCUS },
-      { delay: delayMs, jobId: `timer-${room.id}`, removeOnComplete: true },
+      {
+        delay: delayMs,
+        jobId: `timer-${room.id}-focus`,
+        removeOnComplete: true,
+      },
     );
 
     this.eventEmitter.emit(`room.updated.${room.id}`, {
