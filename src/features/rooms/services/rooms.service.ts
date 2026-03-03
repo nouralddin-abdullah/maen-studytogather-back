@@ -129,7 +129,7 @@ export class RoomsService {
     }
 
     const result = await this.roomRepo.save(room);
-    const visualKeys = ['name', 'theme', 'changeSound'];
+    const visualKeys = ['name', 'theme', 'ambientSound'];
 
     const didSettingsChange =
       visualKeys.some((key) => key in attrs) || !!wallPaperFile;
