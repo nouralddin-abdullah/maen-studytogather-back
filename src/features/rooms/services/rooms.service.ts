@@ -186,9 +186,16 @@ export class RoomsService {
         const currentParticipants = currentSessions.map((s) => ({
           id: s.user.id,
           nickName: s.user.nickName,
-          username: s.user.username,
+          userName: s.user.username,
           avatar: s.user.avatar,
+          quote: s.user.quote,
+          country: s.user.country,
+          field: s.user.field,
           currentStreak: s.user.currentStreak,
+          twitterUrl: s.user.twitterUrl,
+          discordUsername: s.user.discordUsername,
+          totalFocusMinutes: s.user.totalFocusMinutes,
+          profileBackgroundUrl: s.user.profileBackgroundUrl,
           joinedAt: s.joinedAt,
         }));
         return {
@@ -232,8 +239,16 @@ export class RoomsService {
     const newParticipant = {
       id: joiningUser.id,
       nickName: joiningUser.nickName,
+      userName: joiningUser.username,
       avatar: joiningUser.avatar,
+      quote: joiningUser.quote,
+      country: joiningUser.country,
+      field: joiningUser.field,
       currentStreak: joiningUser.currentStreak,
+      twitterUrl: joiningUser.twitterUrl,
+      discordUsername: joiningUser.discordUsername,
+      totalFocusMinutes: joiningUser.totalFocusMinutes,
+      profileBackgroundUrl: joiningUser.profileBackgroundUrl,
       joinedAt: new Date(),
     };
     this.eventEmitter.emit(`room.updated.${room.id}`, {
