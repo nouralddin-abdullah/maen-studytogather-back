@@ -38,6 +38,13 @@ export class SignupSwaggerDto {
   field?: Field;
 
   @ApiPropertyOptional({
+    example: 'America/New_York',
+    description:
+      'IANA timezone identifier (e.g. America/New_York, Europe/London)',
+  })
+  timezone?: string;
+
+  @ApiPropertyOptional({
     type: 'string',
     format: 'binary',
     description: 'Profile picture',

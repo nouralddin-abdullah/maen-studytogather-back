@@ -45,7 +45,8 @@ export class AuthService {
     avatarFile?: { buffer: Buffer; originalname: string; mimetype: string },
     country?: string | null,
     field?: Field | null,
-    gender?: Sex | null
+    gender?: Sex | null,
+    timezone?: string,
   ): Promise<TokenResponse> {
     // hash the password
     const hashedPassword = await this.hashPassword(password);
@@ -62,7 +63,8 @@ export class AuthService {
       avatarFile,
       country,
       field,
-      gender
+      gender,
+      timezone,
     );
 
     // return JWT token

@@ -40,6 +40,7 @@ export class UsersService {
     country?: string | null,
     field?: Field | null,
     gender?: Sex | null,
+    timezone?: string,
   ): Promise<User> {
     // duplicate email?
     if (await this.findOneByEmail(email)) {
@@ -60,6 +61,7 @@ export class UsersService {
       country,
       field,
       gender,
+      ...(timezone && { timezone }),
     });
     // now we upload the file if provided
     if (avatarFile) {

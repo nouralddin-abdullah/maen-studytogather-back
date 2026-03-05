@@ -25,7 +25,7 @@ import {
 } from '@shared/dto/index';
 import { type AuthenticatedUser } from '@shared/types';
 import { CreateRoomDto } from '../dto/create-room.dto';
-import { RoomDTO } from '../dto/room.dto';
+import { RoomDTO, HostRoomDTO } from '../dto/room.dto';
 import { CreateRoomSwaggerDto } from '../swagger/create-room-swagger.dto';
 import { UpdateRoomDto } from '../dto/update-room.dto';
 import { JoinRoomDto } from '../dto/join-room.dto';
@@ -66,6 +66,21 @@ export class RoomsController {
   @Get('discover')
   async getDiscoverRooms(@Query() query: PaginationQueryDto) {
     return await this.roomsService.getDiscovery(query);
+  }
+
+  // host-only: get room settings including passCode
+  @Get(':roomId/settings')
+  @Serialize(ApiResponseDTO(HostRoomDTO))
+  async getRoomSettings(
+    @Param('roomId') roomId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const room = await this.roomsService.getRoomSettings(roomId, user.userId);
+    return {
+      success: true,
+      message: 'Room settings retrieved successfully',
+      item: room,
+    };
   }
 
   @Patch(':roomId')

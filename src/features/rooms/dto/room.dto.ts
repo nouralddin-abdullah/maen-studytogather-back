@@ -68,3 +68,8 @@ export class RoomDTO {
   @Expose()
   updatedAt: Date;
 }
+
+export class HostRoomDTO extends RoomDTO {
+  @Expose()
+  passCode: string | null;
+}

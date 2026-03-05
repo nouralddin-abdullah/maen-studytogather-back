@@ -46,6 +46,7 @@ import { SignupSwaggerDto } from '../swagger/signup-swagger.dto';
 import { UpdateMeSwaggerDto } from '../swagger/updateme-swagger.dto';
 import { LocalAuthGuard } from '../guards/local-auth.guard';
 import { GoogleAuthGuard } from '../guards/google-auth.guard';
+import { PublicUserDTO } from '../dto/public-user.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -81,6 +82,7 @@ export class UsersController {
       body.country,
       body.field,
       body.gender,
+      body.timezone,
     );
     return {
       success: true,
@@ -108,6 +110,12 @@ export class UsersController {
   @Serialize(UserDTO)
   async getCurrentUser(@CurrentUser() user: AuthenticatedUser) {
     return await this.usersService.findOne(user.userId);
+  }
+
+  @Get('/:id')
+  @Serialize(PublicUserDTO)
+  async getUserProfile(@Param('id') userId: string) {
+    return await this.usersService.findOne(userId);
   }
 
   // update current user

@@ -53,6 +53,26 @@ export class RoomsService {
   async findOne(id: string) {
     return await this.roomRepo.findOneBy({ id });
   }
+
+  async getRoomSettings(roomId: string, userId: string) {
+    const room = await this.roomRepo
+      .createQueryBuilder('room')
+      .addSelect('room.passCode')
+      .leftJoinAndSelect('room.host', 'host')
+      .where('room.id = :roomId', { roomId })
+      .getOne();
+
+    if (!room) throw new NotFoundException('Room not found');
+    if (room.hostId !== userId) {
+      throw new ForbiddenException('Only the host can view room settings');
+    }
+
+    return {
+      ...room,
+      hasPassCode: !!room.passCode,
+    };
+  }
+
   async create(
     dto: CreateRoomDto,
     hostId: string,
