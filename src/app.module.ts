@@ -24,6 +24,7 @@ import { RoomsModule } from '@features/rooms/rooms.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { BullModule } from '@nestjs/bullmq';
 import { secrets } from '@core/config';
+import { GoalsModule } from './features/goals/goals.module';
 
 @Module({
   imports: [
@@ -178,6 +179,7 @@ import { secrets } from '@core/config';
     UsersModule,
     RoomsModule,
     HealthModule,
+    GoalsModule,
   ],
   controllers: [AppController],
   providers: [
