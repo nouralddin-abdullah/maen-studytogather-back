@@ -284,8 +284,16 @@ export class RoomsService {
     const currentParticipants = currentSessions.map((s) => ({
       id: s.user.id,
       nickName: s.user.nickName,
+      userName: s.user.username,
       avatar: s.user.avatar,
+      quote: s.user.quote,
+      country: s.user.country,
+      field: s.user.field,
       currentStreak: s.user.currentStreak,
+      twitterUrl: s.user.twitterUrl,
+      discordUsername: s.user.discordUsername,
+      totalFocusMinutes: s.user.totalFocusMinutes,
+      profileBackgroundUrl: s.user.profileBackgroundUrl,
       joinedAt: s.joinedAt,
     }));
     return {

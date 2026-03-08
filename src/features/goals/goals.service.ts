@@ -11,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Goal } from './entities/goal.entity';
 import { StudySession } from '@features/rooms/entities/study-session.entity';
 import { StudySessionStatus } from '@features/rooms/enums/study-session.enums';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class GoalsService {
@@ -19,6 +20,7 @@ export class GoalsService {
     @InjectRepository(StudySession)
     private sessionRepo: Repository<StudySession>,
     @InjectRepository(Goal) private goalRepo: Repository<Goal>,
+    private eventEmitter: EventEmitter2,
   ) {}
   async create(userId: string, createGoalDto: CreateGoalDto) {
     const user = await this.userService.findOne(userId);
@@ -27,7 +29,22 @@ export class GoalsService {
       ...createGoalDto,
       userId: userId,
     });
-    return await this.goalRepo.save(goal);
+    const createdGoal = await this.goalRepo.save(goal);
+    //check if user in active session and then emit new event to that room with the goal as payload
+    const session = await this.sessionRepo.findOneBy({
+      status: StudySessionStatus.ACTIVE,
+      userId: userId,
+    });
+    if (session) {
+      this.eventEmitter.emit(`room.updated.${session.roomId}`, {
+        type: 'USER_CREATED_GOAL',
+        payload: {
+          goal: createdGoal,
+        },
+      });
+    }
+
+    return createdGoal;
   }
 
   async update(id: string, userId: string, updateGoalDto: UpdateGoalDto) {
@@ -35,8 +52,36 @@ export class GoalsService {
     if (!goal) throw new NotFoundException("Goal wasn't found");
     if (goal.userId != userId)
       throw new ForbiddenException('Only goal owner can edit it');
+    const isJustCompleted =
+      goal.isCompleted === false && updateGoalDto.isCompleted === true;
+    const isUnchecked =
+      goal.isCompleted === true && updateGoalDto.isCompleted === false;
+
     Object.assign(goal, updateGoalDto);
-    return await this.goalRepo.save(goal);
+    const updatedGoal = await this.goalRepo.save(goal);
+
+    //Goal event ommit
+    const session = await this.sessionRepo.findOneBy({
+      status: StudySessionStatus.ACTIVE,
+      userId: userId,
+    });
+
+    if (session) {
+      let eventType = 'USER_UPDATED_GOAL';
+      if (isJustCompleted) {
+        eventType = 'USER_COMPLETED_GOAL';
+      } else if (isUnchecked) {
+        eventType = 'USER_UNCHECKED_GOAL';
+      }
+      this.eventEmitter.emit(`room.updated.${session.roomId}`, {
+        type: eventType,
+        payload: {
+          userId: userId,
+          goal: updatedGoal,
+        },
+      });
+    }
+    return updatedGoal;
   }
 
   async getMyGoals(userId: string) {
@@ -50,6 +95,14 @@ export class GoalsService {
       relations: ['children'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async removeGoal(goalId: string, userId: string) {
+    const goal = await this.goalRepo.findOneBy({ id: goalId });
+    if (!goal) throw new NotFoundException("Goal wasn't found");
+    if (goal.userId != userId)
+      throw new ForbiddenException('Only goal owner can edit it');
+    return this.goalRepo.remove(goal);
   }
 
   async getRoomParticipantsGoals(roomId: string) {

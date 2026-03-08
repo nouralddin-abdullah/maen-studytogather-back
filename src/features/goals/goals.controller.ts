@@ -75,4 +75,16 @@ export class GoalsController {
       items: participantsGoals,
     };
   }
+
+  @Delete(':id')
+  async deleteGoal(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') goalId: string,
+  ) {
+    await this.goalsService.removeGoal(goalId, user.userId);
+    return {
+      success: true,
+      message: 'Goals deleted successfully',
+    };
+  }
 }
