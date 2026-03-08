@@ -5,13 +5,16 @@ import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 
 // Controllers
 import { UsersController } from './controllers/users.controller';
+import { FriendshipsController } from './controllers/friendships.controller';
 
 // Services
 import { UsersService } from './services/users.service';
 import { AuthService } from './services/auth.service';
+import { FriendshipsService } from './services/friendships.service';
 
 // Entities
 import { User } from './entities/user.entity';
+import { Friendship } from './entities/friendship.entity';
 
 // Strategies
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -24,7 +27,7 @@ import { UserStatsProcessor } from './services/user-stats.processor';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, DailyStudyLog]),
+    TypeOrmModule.forFeature([User, DailyStudyLog, Friendship]),
     BullModule.registerQueue({
       name: USER_STATS_QUEUE,
     }),
@@ -40,10 +43,11 @@ import { UserStatsProcessor } from './services/user-stats.processor';
       inject: [ConfigService],
     }),
   ],
-  controllers: [UsersController],
+  controllers: [UsersController, FriendshipsController],
   providers: [
     UsersService,
     AuthService,
+    FriendshipsService,
     LocalStrategy,
     JwtStrategy,
     GoogleStrategy,
