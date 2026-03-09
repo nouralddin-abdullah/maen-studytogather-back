@@ -25,6 +25,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { BullModule } from '@nestjs/bullmq';
 import { secrets } from '@core/config';
 import { GoalsModule } from './features/goals/goals.module';
+import { PresenceModule } from './features/presence/presence.module';
 
 @Module({
   imports: [
@@ -180,6 +181,7 @@ import { GoalsModule } from './features/goals/goals.module';
     RoomsModule,
     HealthModule,
     GoalsModule,
+    PresenceModule,
   ],
   controllers: [AppController],
   providers: [

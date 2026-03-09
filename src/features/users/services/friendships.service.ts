@@ -16,13 +16,33 @@ import {
   PaginatedResponse,
   createPaginatedResponse,
 } from '@shared/dto';
+import { PresenceService } from '@features/presence/presence.service';
 
 @Injectable()
 export class FriendshipsService {
   constructor(
     @InjectRepository(Friendship)
     private friendshipRepo: Repository<Friendship>,
+    private presenceService: PresenceService,
   ) {}
+
+  async getAcceptedFriendIds(userId: string): Promise<string[]> {
+    const friendships = await this.friendshipRepo.find({
+      where: [
+        { requesterId: userId, status: FriendshipStatus.ACCEPTED },
+        { addresseeId: userId, status: FriendshipStatus.ACCEPTED },
+      ],
+      select: ['requesterId', 'addresseeId'],
+    });
+
+    const friendIds = friendships.map((friendship) => {
+      return friendship.requesterId === userId
+        ? friendship.addresseeId
+        : friendship.requesterId;
+    });
+
+    return friendIds;
+  }
 
   // send a friend request
   async sendRequest(
@@ -34,7 +54,6 @@ export class FriendshipsService {
         'You cannot send a friend request to yourself',
       );
     }
-
     // check if a friendship already exists in either direction
     const existing = await this.friendshipRepo
       .createQueryBuilder('f')
@@ -122,7 +141,7 @@ export class FriendshipsService {
   async getFriends(
     userId: string,
     query: PaginationQuery,
-  ): Promise<PaginatedResponse<Friendship>> {
+  ): Promise<PaginatedResponse<any>> {
     const { page, limit } = query;
 
     const [data, total] = await this.friendshipRepo.findAndCount({
@@ -136,7 +155,36 @@ export class FriendshipsService {
       order: { updatedAt: 'DESC' },
     });
 
-    return createPaginatedResponse(data, total, page, limit);
+    if (data.length === 0)
+      return createPaginatedResponse(data, total, page, limit);
+
+    const friendIds = data.map((f) =>
+      f.requesterId === userId ? f.addresseeId : f.requesterId,
+    );
+    const onlineStatuses =
+      await this.presenceService.getOnlineStatus(friendIds);
+    const statusMap = new Map<string, any>();
+    for (const status of onlineStatuses) {
+      statusMap.set(status.userId, status);
+    }
+
+    const enrichedData = data.map((friendship) => {
+      const isRequester = friendship.requesterId === userId;
+      const friendProfile = isRequester
+        ? friendship.addressee
+        : friendship.requester;
+      const presence = statusMap.get(friendProfile.id);
+      return {
+        ...friendship,
+        friendProfile: friendProfile,
+        isOnline: presence?.isOnline || false,
+        roomId: presence?.roomId,
+        roomName: presence?.roomName,
+        inviteCode: presence?.inviteCode,
+      };
+    });
+
+    return createPaginatedResponse(enrichedData, total, page, limit);
   }
 
   // get pending friend requests received by the user (paginated)

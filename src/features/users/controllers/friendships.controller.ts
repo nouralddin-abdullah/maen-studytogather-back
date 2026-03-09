@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  Sse,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
@@ -22,11 +23,18 @@ import { FriendshipsService } from '../services/friendships.service';
 import { FriendshipDTO } from '../dto/friendship.dto';
 import { SendFriendRequestDto } from '../dto/send-friend-request.dto';
 import { RespondFriendRequestDto } from '../dto/respond-friend-request.dto';
+import { EnrichedFriendshipDTO } from '../dto/enriched-friendship.dto';
+import { type AuthenticatedUser } from '@shared/types';
+import { filter, fromEvent, map, Observable } from 'rxjs';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @ApiTags('Friendships')
 @Controller('friendships')
 export class FriendshipsController {
-  constructor(private friendshipsService: FriendshipsService) {}
+  constructor(
+    private friendshipsService: FriendshipsService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   // send a friend request
   @Post()
@@ -68,12 +76,33 @@ export class FriendshipsController {
 
   // get my accepted friends (paginated)
   @Get()
-  @Serialize(PaginatedResponseDTO(FriendshipDTO))
+  @Serialize(PaginatedResponseDTO(EnrichedFriendshipDTO))
   async getMyFriends(
     @CurrentUser('userId') userId: string,
     @Query() query: PaginationQueryDto,
   ) {
     return await this.friendshipsService.getFriends(userId, query);
+  }
+
+  @Sse('live')
+  async streamFriendEvents(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<Observable<MessageEvent>> {
+    const friendIdArray = await this.friendshipsService.getAcceptedFriendIds(
+      user.userId,
+    );
+
+    const friendIdsSet = new Set(friendIdArray);
+
+    return fromEvent(this.eventEmitter, 'user.presence.changed').pipe(
+      filter((payload: any) => friendIdsSet.has(payload.userId)),
+
+      map((payload: any) => {
+        return {
+          data: { type: 'FRIEND_PRESENCE_UPDATE', payload },
+        } as MessageEvent;
+      }),
+    );
   }
 
   // get pending friend requests I received (paginated)

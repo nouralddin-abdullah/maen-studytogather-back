@@ -24,6 +24,7 @@ import { DailyStudyLog } from './entities/daily-study-log.entity';
 import { BullModule } from '@nestjs/bullmq';
 import { USER_STATS_QUEUE } from './constants/user-stats.constants';
 import { UserStatsProcessor } from './services/user-stats.processor';
+import { PresenceModule } from '@features/presence/presence.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { UserStatsProcessor } from './services/user-stats.processor';
       }),
       inject: [ConfigService],
     }),
+    PresenceModule,
   ],
   controllers: [UsersController, FriendshipsController],
   providers: [

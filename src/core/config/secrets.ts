@@ -90,6 +90,11 @@ export const secrets = {
     password: getEnv('REDIS_PASSWORD', ''),
   },
 
+  livekit: {
+    url: getEnv('LIVEKIT_URL', ''),
+    apiKey: getEnv('LIVEKIT_API_KEY', ''),
+    apiSecret: getEnv('LIVEKIT_API_SECRET', ''),
+  },
   // Mail
   mail: {
     provider: getEnv('MAIL_PROVIDER', 'smtp') as 'smtp' | 'sendgrid' | 'resend',
@@ -119,6 +124,7 @@ if (secrets.nodeEnv === 'development') {
   console.log('[Secrets] Loaded configuration:');
   console.log(`  - Node Env: ${secrets.nodeEnv}`);
   console.log(`  - Mail Queue Enabled: ${secrets.mail.queueEnabled}`);
+  console.log(`  - LiveKit url: ${secrets.livekit.url}`);
   console.log(`  - Redis Host: ${secrets.redis.host}:${secrets.redis.port}`);
 }
 

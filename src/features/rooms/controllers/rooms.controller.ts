@@ -32,11 +32,15 @@ import { JoinRoomDto } from '../dto/join-room.dto';
 import { Observable } from 'rxjs';
 import type { Request } from 'express';
 import { UpdatePomodoroDto } from '../dto/update-pomodoro.dto';
+import { PresenceService } from '@features/presence/presence.service';
 
 @ApiTags('Rooms')
 @Controller('rooms')
 export class RoomsController {
-  constructor(private roomsService: RoomsService) {}
+  constructor(
+    private roomsService: RoomsService,
+    private readonly presenceService: PresenceService,
+  ) {}
 
   @Post('/create-room')
   @ImageUpload('wallpaper')
@@ -123,13 +127,38 @@ export class RoomsController {
   }
 
   @Sse('sse/:roomId')
-  connectToRoom(
+  async connectToRoom(
     @CurrentUser() user: AuthenticatedUser,
     @Param('roomId') roomId: string,
     @Req() req: Request,
-  ): Observable<MessageEvent> {
+  ): Promise<Observable<MessageEvent>> {
+    const room = await this.roomsService.findOne(roomId);
+    const roomData = {
+      roomId: room!.id,
+      roomName: room!.name,
+      inviteCode: room!.inviteCode,
+    };
+    this.presenceService.setOnline(user.userId, roomData).catch((err) => {
+      console.error(
+        `[Presence] Failed to set user ${user.userId} online:`,
+        err,
+      );
+    });
+    const heartbeatInterval = setInterval(() => {
+      this.presenceService.setOnline(user.userId, roomData).catch((err) => {
+        console.error(`[Presence] Failed to refresh user ${user.userId}:`, err);
+      });
+    }, 30000);
+
     req.on('close', () => {
+      clearInterval(heartbeatInterval);
       this.roomsService.handleUserDisconnect(user.userId);
+      this.presenceService.setOffline(user.userId).catch((err) => {
+        console.error(
+          `[Presence] Failed to set user ${user.userId} offline:`,
+          err,
+        );
+      });
     });
 
     return this.roomsService.subscribeToRoomEvents(roomId);

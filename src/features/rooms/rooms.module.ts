@@ -9,6 +9,7 @@ import { UsersModule } from '@features/users';
 import { ROOM_TIMER_QUEUE } from './constants/rooms.constants';
 import { RoomTimerProcessor } from './services/room-timer.processor';
 import { USER_STATS_QUEUE } from '@features/users/constants/user-stats.constants';
+import { PresenceModule } from '@features/presence/presence.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { USER_STATS_QUEUE } from '@features/users/constants/user-stats.constants
       { name: ROOM_TIMER_QUEUE },
       { name: USER_STATS_QUEUE },
     ),
+    PresenceModule,
   ],
   providers: [RoomsService, RoomTimerProcessor],
   controllers: [RoomsController],
