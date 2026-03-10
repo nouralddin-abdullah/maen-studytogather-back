@@ -10,6 +10,7 @@ import { ROOM_TIMER_QUEUE } from './constants/rooms.constants';
 import { RoomTimerProcessor } from './services/room-timer.processor';
 import { USER_STATS_QUEUE } from '@features/users/constants/user-stats.constants';
 import { PresenceModule } from '@features/presence/presence.module';
+import { LiveKitService } from './services/livekit.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { PresenceModule } from '@features/presence/presence.module';
     ),
     PresenceModule,
   ],
-  providers: [RoomsService, RoomTimerProcessor],
+  providers: [RoomsService, RoomTimerProcessor, LiveKitService],
   controllers: [RoomsController],
   exports: [RoomsService],
 })

@@ -34,6 +34,7 @@ import {
   USER_STATS_QUEUE,
   UserStatsJobName,
 } from '@features/users/constants/user-stats.constants';
+import { LiveKitService } from './livekit.service';
 
 @Injectable()
 export class RoomsService {
@@ -48,6 +49,7 @@ export class RoomsService {
     private userService: UsersService,
     private eventEmitter: EventEmitter2,
     @InjectQueue(USER_STATS_QUEUE) private userStatsQueue: Queue,
+    private livekitService: LiveKitService,
   ) {}
 
   async findOne(id: string) {
@@ -188,6 +190,11 @@ export class RoomsService {
     const joiningUser = await this.userService.findOne(userId);
     if (!joiningUser) throw new NotFoundException('User not found');
 
+    const livekitToken = await this.livekitService.generateToken(
+      room.id,
+      userId,
+      joiningUser.username,
+    );
     const activeSession = await this.sessionRepo.findOne({
       where: {
         userId: userId,
@@ -239,6 +246,7 @@ export class RoomsService {
             hostId: room.hostId,
           },
           participants: currentParticipants,
+          livekitToken: livekitToken,
         };
       } else {
         throw new ConflictException(
@@ -317,6 +325,7 @@ export class RoomsService {
         hostId: room.hostId,
       },
       currentParticipants: currentParticipants,
+      livekitToken: livekitToken,
     };
   }
 
