@@ -1,7 +1,7 @@
 # ===========================================
-# PRODUCTION - All Local (Self-Hosted)
+# PRODUCTION - PostgreSQL Local, Redis Hosted
 # ===========================================
-# PostgreSQL + Redis + API all running in Docker
+# PostgreSQL runs in Docker, Redis is hosted externally (cloud)
 #
 # Usage: docker compose up --build -d
 # ===========================================
@@ -18,26 +18,15 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-nestjs_db}"]
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-nestjs_db}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-    networks:
-      - app-network
-
-  redis:
-    image: redis:7-alpine
-    container_name: nestjs-redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - app-network
 
@@ -50,22 +39,27 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     ports:
-      - "${PORT:-3000}:3000"
+      - '${PORT:-3000}:3000'
     env_file:
       - .env
     environment:
       - NODE_ENV=production
       - PORT=3000
-      # Override for Docker internal networking
+      # PostgreSQL runs in Docker, override host to container name
       - DB_HOST=postgres
       - DB_PORT=5432
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      # Redis is hosted externally — REDIS_HOST & REDIS_PORT come from .env
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health/live"]
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://localhost:3000/api/health/live',
+        ]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -79,6 +73,4 @@ networks:
 
 volumes:
   postgres-data:
-    driver: local
-  redis-data:
     driver: local
