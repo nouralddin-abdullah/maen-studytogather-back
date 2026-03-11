@@ -12,7 +12,7 @@ export const dataSourceOptions: DataSourceOptions = {
   database: secrets.db.database,
   entities: ['dist/**/*.entity.js'],
   migrations: ['dist/core/database/migrations/*.js'],
-  synchronize: false, // always false - use migrations instead
+  synchronize: true, // always false - use migrations instead
 };
 
 const dataSource = new DataSource(dataSourceOptions);

@@ -107,7 +107,7 @@ import { PresenceModule } from './features/presence/presence.module';
         password: configService.get('DB_PASSWORD', 'postgres'),
         database: configService.get('DB_DATABASE', 'nestjs_db'),
         autoLoadEntities: true,
-        synchronize: configService.get('NODE_ENV') !== 'production',
+        synchronize: true,
         migrations: ['dist/core/database/migrations/*.js'],
         migrationsRun: configService.get('NODE_ENV') === 'production',
       }),
