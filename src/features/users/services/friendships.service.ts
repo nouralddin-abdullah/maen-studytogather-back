@@ -248,4 +248,29 @@ export class FriendshipsService {
 
     await this.friendshipRepo.remove(friendship);
   }
+
+  async getFriendshipStatus(userId: string, targetId: string) {
+    if (targetId === userId)
+      throw new BadRequestException('Cannot check friendship for youself.');
+    const friendship = await this.friendshipRepo.findOne({
+      where: [
+        { requesterId: userId, addresseeId: targetId },
+        { requesterId: targetId, addresseeId: userId },
+      ],
+    });
+
+    if (!friendship) {
+      return { status: 'NOT_FRIENDS' };
+    }
+
+    if (friendship.status === FriendshipStatus.ACCEPTED) {
+      return { status: 'FRIENDS', friendshipId: friendship.id };
+    }
+
+    if (friendship.requesterId === userId) {
+      return { status: 'PENDING_SENT', friendshipId: friendship.id };
+    } else {
+      return { status: 'PENDING_RECEIVED', friendshipId: friendship.id };
+    }
+  }
 }

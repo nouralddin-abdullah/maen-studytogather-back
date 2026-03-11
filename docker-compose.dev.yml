@@ -1,7 +1,8 @@
 # ===========================================
 # DEVELOPMENT - With Hot Reload
 # ===========================================
-# PostgreSQL + Redis + API with live code reloading
+# PostgreSQL (local) + API with live code reloading
+# Redis is expected to be hosted externally (set in .env)
 #
 # Usage: docker compose -f docker-compose.dev.yml up --build
 # ===========================================
@@ -15,27 +16,15 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_DATABASE:-nestjs_db}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - '${DB_PORT:-5432}:5432'
     volumes:
       - postgres-data-dev:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-nestjs_db}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app-network
-
-  redis:
-    image: redis:7-alpine
-    container_name: nestjs-redis-dev
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    command: redis-server --appendonly yes
-    volumes:
-      - redis-data-dev:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-nestjs_db}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,19 +39,17 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     ports:
-      - "${PORT:-3000}:3000"
+      - '${PORT:-3000}:3000'
     env_file:
       - .env
     environment:
       - NODE_ENV=development
       - PORT=3000
+      # PostgreSQL runs in Docker, override host to container name
       - DB_HOST=postgres
       - DB_PORT=5432
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      # Redis is hosted externally — REDIS_HOST & REDIS_PORT come from .env
     volumes:
       - .:/app
       - /app/node_modules
@@ -75,6 +62,4 @@ networks:
 
 volumes:
   postgres-data-dev:
-    driver: local
-  redis-data-dev:
     driver: local

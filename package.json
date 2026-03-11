@@ -23,7 +23,13 @@
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
     "migration:show": "npm run typeorm -- migration:show",
-    "migration:create": "npx typeorm migration:create"
+    "migration:create": "npx typeorm migration:create",
+    "docker:dev": "docker compose -f docker-compose.dev.yml up --build",
+    "docker:dev:down": "docker compose -f docker-compose.dev.yml down",
+    "docker:prod": "docker compose up --build -d",
+    "docker:prod:down": "docker compose down",
+    "docker:prod:external": "docker compose -f docker-compose.prod.yml up --build -d",
+    "docker:prod:external:down": "docker compose -f docker-compose.prod.yml down"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.970.0",

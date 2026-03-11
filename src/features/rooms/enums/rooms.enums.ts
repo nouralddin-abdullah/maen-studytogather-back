@@ -1,6 +1,10 @@
 export enum RoomTheme {
   CLASSIC = 'CLASSIC',
   NIGHT_CITY = 'NIGHT_CITY',
+  GITHUB = 'GITHUB',
+  PINKY = 'PINKY',
+  GRAY = 'GRAY',
+  DARK = 'DARK',
 }
 
 export enum TimerPhase {

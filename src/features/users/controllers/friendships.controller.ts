@@ -137,4 +137,15 @@ export class FriendshipsController {
       message: 'Friendship removed successfully',
     };
   }
+
+  @Get('/get-status/:id')
+  async getFriendshipStatus(
+    @Param(':id') targetId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return await this.friendshipsService.getFriendshipStatus(
+      user.userId,
+      targetId,
+    );
+  }
 }
