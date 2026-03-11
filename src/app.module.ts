@@ -109,7 +109,7 @@ import { PresenceModule } from './features/presence/presence.module';
         autoLoadEntities: true,
         synchronize: true,
         migrations: ['dist/core/database/migrations/*.js'],
-        migrationsRun: configService.get('NODE_ENV') === 'production',
+        migrationsRun: false,
       }),
       inject: [ConfigService],
     }),
