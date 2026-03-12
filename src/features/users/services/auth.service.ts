@@ -236,18 +236,18 @@ export class AuthService {
     );
 
     // generate unique username from email
-    const baseUsername = email
-      .split('@')[0]
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '');
-    let username = baseUsername;
+    const baseName = displayName
+      ? displayName.toLowerCase().replace(/[^a-z0-9]/g, '')
+      : 'student';
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    let username = `${baseName}${randomSuffix}`;
     let counter = 1;
 
     // making sure that sername is unique -> extra query ik but you can remove it
     // since username is from email - @gmail.com so mostly it wont be repeated
     // you can add also some random number to it, but i will keep the check
     while (await this.usersService.findOneByUsername(username)) {
-      username = `${baseUsername}${counter}`;
+      username = `${baseName}${randomSuffix}${counter}`;
       counter++;
     }
 
