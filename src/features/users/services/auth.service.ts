@@ -216,14 +216,14 @@ export class AuthService {
     email: string;
     displayName: string;
     avatar?: string;
-  }): Promise<User> {
+  }): Promise<{ user: User; isNewUser: boolean }> {
     const { email, displayName, avatar } = profile;
 
     // if user exist we just return it
     let user = await this.usersService.findOneByEmail(email);
 
     if (user) {
-      return user;
+      return { user: user, isNewUser: false };
     }
 
     // user doesn't exist - create new account
@@ -262,6 +262,6 @@ export class AuthService {
     });
 
     // return the user to generate a token
-    return user;
+    return { user, isNewUser: true };
   }
 }

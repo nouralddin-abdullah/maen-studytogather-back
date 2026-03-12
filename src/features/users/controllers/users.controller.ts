@@ -229,17 +229,24 @@ export class UsersController {
   @Get('/auth/google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google OAuth callback' })
-  googleAuthCallback(@Request() req: { user: any }, @Res() res: Response) {
+  googleAuthCallback(
+    @Request() @Request() req: { user: { user: any; isNewUser: boolean } },
+    @Res() res: Response,
+  ) {
     // req.user is populated by GoogleStrategy.validate()
-    const token = this.authService.generateToken(req.user);
+    const { user, isNewUser } = req.user;
+    const token = this.authService.generateToken(user);
 
     // you have 2 options depending on your use cases:
     // option 1: redirect to frontend with token in query params
     // good for web apps - frontend can extract token and store it
     const frontendUrl = secrets.frontendUrl;
-    res.redirect(
-      `${frontendUrl}/auth/callback?token=${token.accessToken}&expiresIn=${token.expiresIn}`,
-    );
+
+    let redirectUrl = `${frontendUrl}/auth/callback?token=${token.accessToken}&expiresIn=${token.expiresIn}`;
+    if (isNewUser) {
+      redirectUrl += `&isNewUser=true`;
+    }
+    res.redirect(redirectUrl);
 
     // option 2: return JSON directly (uncomment if you prefer this)
     // return { success: true, message: 'Google login successful', data: token };

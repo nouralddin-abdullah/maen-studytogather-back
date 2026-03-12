@@ -41,7 +41,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     };
 
     // find or create user for it's logic check authService validate google user, then return for JWT generation
-    const user = await this.authService.validateGoogleUser(googleProfile);
-    done(null, user);
+    const authResult = await this.authService.validateGoogleUser(googleProfile);
+    done(null, authResult);
   }
 }
