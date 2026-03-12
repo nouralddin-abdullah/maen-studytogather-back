@@ -80,7 +80,7 @@ export class RoomsService {
       .createQueryBuilder('room')
       .addSelect('room.passCode')
       .leftJoinAndSelect('room.host', 'host')
-      .where('hostId = :userId', { userId })
+      .where('room.hostId = :userId', { userId })
       .getMany();
 
     const data = rooms.map((room) => ({
