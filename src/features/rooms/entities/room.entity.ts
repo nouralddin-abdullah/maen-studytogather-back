@@ -21,8 +21,8 @@ export class Room {
   @Column({ length: 100 })
   name: string;
 
-  @Column({ length: 500 })
-  description: string;
+  @Column({ length: 500, type: 'varchar', nullable: true })
+  description: string | null;
 
   @Column({ type: 'varchar', default: RoomTheme.CLASSIC })
   theme: RoomTheme;
@@ -36,8 +36,8 @@ export class Room {
   @Column({ default: 0 })
   currentNumParticipents: number;
 
-  @Column()
-  wallPaperUrl: string;
+  @Column({ type: 'varchar', nullable: true })
+  wallPaperUrl: string | null;
 
   @Column({ unique: true })
   inviteCode: string;

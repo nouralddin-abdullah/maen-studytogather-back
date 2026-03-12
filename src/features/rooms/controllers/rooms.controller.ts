@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -50,14 +51,18 @@ export class RoomsController {
   async createRoom(
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: CreateRoomDto,
-    @UploadedImage({ required: true, maxSize: FileSizes.MB(5) })
+    @UploadedImage({ required: false, maxSize: FileSizes.MB(5) })
     file: Express.Multer.File,
   ) {
-    const room = await this.roomsService.create(body, user.userId, {
-      buffer: file.buffer,
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-    });
+    const room = await this.roomsService.create(
+      body,
+      user.userId,
+      file && {
+        buffer: file.buffer,
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+      },
+    );
     return {
       success: true,
       message: 'Room created successfully',
@@ -203,5 +208,33 @@ export class RoomsController {
     @Body() body: UpdatePomodoroDto,
   ) {
     return await this.roomsService.changePomodoro(roomId, user.userId, body);
+  }
+
+  @Delete(':roomId')
+  async deleteRoom(
+    @Param('roomId') roomId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const result = await this.roomsService.softDeleteRoom(user.userId, roomId);
+    if (result.affected) {
+      return {
+        status: true,
+        message: 'Room was deleted!',
+      };
+    }
+    return {
+      status: 'Failed',
+      message: 'Failed to delete the room!',
+    };
+  }
+  @Serialize(ApiResponseDTO(RoomDTO))
+  @Get('my-rooms')
+  async getMyRooms(@CurrentUser() user: AuthenticatedUser) {
+    const rooms = await this.roomsService.getMyRooms(user.userId);
+    return {
+      success: true,
+      message: 'User is rooms has been retrieved',
+      item: rooms,
+    };
   }
 }

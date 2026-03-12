@@ -3,12 +3,12 @@ import { AmbientSound, RoomTheme } from '../enums/rooms.enums';
 
 // Swagger documentation DTO — validation is handled by CreateRoomDto with Zod
 export class CreateRoomSwaggerDto {
-  @ApiProperty({ example: "Toasty's Room", minLength: 10, maxLength: 100 })
+  @ApiProperty({ example: "Toasty's Room", minLength: 1, maxLength: 100 })
   name: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'We doing focus sessions',
-    minLength: 10,
+    minLength: 1,
     maxLength: 500,
   })
   description: string;
@@ -67,7 +67,7 @@ export class CreateRoomSwaggerDto {
   })
   breakDuration: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: 'string',
     format: 'binary',
     description: 'Room wallpaper image',

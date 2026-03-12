@@ -1,4 +1,4 @@
-import z from 'zod';
+import z, { optional } from 'zod';
 import { AmbientSound, RoomTheme } from '../enums/rooms.enums';
 import { createZodDto } from 'nestjs-zod';
 
@@ -6,11 +6,12 @@ const createRoomSchema = z.object({
   name: z
     .string()
     .max(100, 'Name max length is 100 characters')
-    .min(10, 'Name min length is 10'),
+    .min(1, 'Name min length is 1'),
   description: z
     .string()
     .max(500, 'Description max length is 500 characters')
-    .min(10, 'Description min length is 10 characters'),
+    .min(1, 'Description min length is 10 characters')
+    .optional(),
   theme: z
     .enum(RoomTheme, { message: 'Choosed Room theme must be from the list' })
     .optional(),

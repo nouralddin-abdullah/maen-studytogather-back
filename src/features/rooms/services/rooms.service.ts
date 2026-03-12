@@ -75,24 +75,43 @@ export class RoomsService {
     };
   }
 
+  async getMyRooms(userId: string) {
+    const rooms = await this.roomRepo
+      .createQueryBuilder('room')
+      .addSelect('room.passCode')
+      .leftJoinAndSelect('room.host', 'host')
+      .getMany();
+
+    const data = rooms.map((room) => ({
+      ...room,
+      hasPassCode: !!room.passCode,
+    }));
+
+    return data;
+  }
+
   async create(
     dto: CreateRoomDto,
     hostId: string,
-    wallPaperFile: { buffer: Buffer; originalname: string; mimetype: string },
+    wallPaperFile?: { buffer: Buffer; originalname: string; mimetype: string },
   ): Promise<Room> {
     let inviteCode = randomBytes(3).toString('hex');
     let roomId = randomUUID();
-    let wallPaperUrl = await this.storageService.upload({
-      key: `wallpapers/${roomId}-${Date.now()}`,
-      body: wallPaperFile.buffer,
-      contentType: wallPaperFile.mimetype,
-    });
+    let wallPaperUrl: string | null = null;
+    if (wallPaperFile) {
+      let uploadResult = await this.storageService.upload({
+        key: `wallpapers/${roomId}-${Date.now()}`,
+        body: wallPaperFile.buffer,
+        contentType: wallPaperFile.mimetype,
+      });
+      wallPaperUrl = uploadResult.url;
+    }
     const newRoom = this.roomRepo.create({
       id: roomId,
       name: dto.name,
       description: dto.description,
       theme: dto.theme,
-      wallPaperUrl: wallPaperUrl.url,
+      wallPaperUrl: wallPaperUrl,
       ambientSound: dto.ambientSound,
       maxCapacity: dto.maxCapacity,
       passCode: dto.passCode,
@@ -636,5 +655,12 @@ export class RoomsService {
       },
     });
     return { message: 'Pomodoro changed!' };
+  }
+  async softDeleteRoom(userId: string, roomId: string) {
+    const room = await this.roomRepo.findOneBy({ id: roomId });
+    if (!room) throw new NotFoundException('Room not found');
+    if (room.hostId !== userId)
+      throw new ForbiddenException('Only the host can delete the room');
+    return await this.roomRepo.softDelete({ id: roomId });
   }
 }
