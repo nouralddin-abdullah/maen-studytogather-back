@@ -11,6 +11,8 @@ import { RoomTimerProcessor } from './services/room-timer.processor';
 import { USER_STATS_QUEUE } from '@features/users/constants/user-stats.constants';
 import { PresenceModule } from '@features/presence/presence.module';
 import { LiveKitService } from './services/livekit.service';
+import { RoomChatGateway } from './Gateways/room.chat.gateway';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -21,8 +23,14 @@ import { LiveKitService } from './services/livekit.service';
       { name: USER_STATS_QUEUE },
     ),
     PresenceModule,
+    JwtModule,
   ],
-  providers: [RoomsService, RoomTimerProcessor, LiveKitService],
+  providers: [
+    RoomsService,
+    RoomTimerProcessor,
+    LiveKitService,
+    RoomChatGateway,
+  ],
   controllers: [RoomsController],
   exports: [RoomsService],
 })
