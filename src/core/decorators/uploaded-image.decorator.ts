@@ -5,7 +5,7 @@ import {
   UploadedFiles as NestUploadedFiles,
   ParseFilePipe,
   MaxFileSizeValidator,
-  FileTypeValidator,
+  FileValidator,
   createParamDecorator,
   ExecutionContext,
   BadRequestException,
@@ -17,7 +17,24 @@ import {
 
 // default configs
 const DEFAULT_MAX_SIZE = 5 * 1024 * 1024; // 5mb
-const DEFAULT_IMAGE_TYPES = /^image\/(jpeg|png|gif|webp)$/;
+const DEFAULT_IMAGE_TYPES = /^image\/(jpeg|jpg|png|gif|webp)$/i;
+
+interface MimeTypeValidatorOptions {
+  fileType: RegExp;
+  currentType?: string;
+}
+
+class MimeTypeValidator extends FileValidator<MimeTypeValidatorOptions> {
+  buildErrorMessage(): string {
+    return `Validation failed (current file type is ${this.validationOptions.currentType || 'unknown'}, expected type is ${this.validationOptions.fileType})`;
+  }
+
+  isValid(file?: Express.Multer.File): boolean {
+    const normalizedMimeType = normalizeMimeType(file?.mimetype);
+    this.validationOptions.currentType = normalizedMimeType || 'unknown';
+    return testMimeType(normalizedMimeType, this.validationOptions.fileType);
+  }
+}
 
 export interface UploadedImageOptions {
   // if the file required in the request? default is true
@@ -82,7 +99,7 @@ export function UploadedImage(options?: UploadedImageOptions) {
           message:
             maxSizeMessage || `File must be less than ${formatBytes(maxSize)}`,
         }),
-        new FileTypeValidator({
+        new MimeTypeValidator({
           fileType,
           ...(fileTypeMessage && { message: fileTypeMessage }),
         }),
@@ -134,7 +151,7 @@ export function UploadedImages(fields: UploadedImagesField[]) {
             `File '${name}' must be less than ${formatBytes(maxSize)}`,
           );
         }
-        if (!fileType.test(file.mimetype)) {
+        if (!testMimeType(file.mimetype, fileType)) {
           throw new BadRequestException(
             `File '${name}' has an invalid file type`,
           );
@@ -159,11 +176,11 @@ function formatBytes(bytes: number): string {
 
 // pre defined file types for suggestions
 export const FileTypes = {
-  IMAGES: /^image\/(jpeg|png|gif|webp)$/,
-  IMAGES_WITH_SVG: /^image\/(jpeg|png|gif|webp|svg\+xml)$/,
+  IMAGES: /^image\/(jpeg|jpg|png|gif|webp)$/i,
+  IMAGES_WITH_SVG: /^image\/(jpeg|jpg|png|gif|webp|svg\+xml)$/i,
   DOCUMENTS:
     /^application\/(pdf|msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document)$/,
-  ALL_IMAGES: /^image\/.+$/,
+  ALL_IMAGES: /^image\/.+$/i,
 } as const;
 
 // pre calculated file sizes - calc
@@ -172,3 +189,18 @@ export const FileSizes = {
   MB: (n: number) => n * 1024 * 1024,
   GB: (n: number) => n * 1024 * 1024 * 1024,
 } as const;
+
+function normalizeMimeType(mimeType?: string): string {
+  if (!mimeType) return '';
+  return mimeType.split(';')[0].trim().toLowerCase();
+}
+
+function testMimeType(mimeType: string | undefined, fileType: RegExp): boolean {
+  const normalizedMimeType = normalizeMimeType(mimeType);
+  if (!normalizedMimeType) return false;
+
+  // Avoid stateful RegExp flags (`g`, `y`) causing false negatives.
+  const safeFlags = fileType.flags.replace(/[gy]/g, '');
+  const safeRegex = new RegExp(fileType.source, safeFlags);
+  return safeRegex.test(normalizedMimeType);
+}
