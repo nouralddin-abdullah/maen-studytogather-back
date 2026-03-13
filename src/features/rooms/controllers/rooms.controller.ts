@@ -30,7 +30,7 @@ import { RoomDTO, HostRoomDTO } from '../dto/room.dto';
 import { CreateRoomSwaggerDto } from '../swagger/create-room-swagger.dto';
 import { UpdateRoomDto } from '../dto/update-room.dto';
 import { JoinRoomDto } from '../dto/join-room.dto';
-import { Observable } from 'rxjs';
+import { interval, map, merge, Observable } from 'rxjs';
 import type { Request } from 'express';
 import { UpdatePomodoroDto } from '../dto/update-pomodoro.dto';
 import { PresenceService } from '@features/presence/presence.service';
@@ -165,8 +165,11 @@ export class RoomsController {
         );
       });
     });
-
-    return this.roomsService.subscribeToRoomEvents(roomId);
+    const networkPing$ = interval(30000).pipe(
+      map(() => ({ data: { type: 'ping' } }) as MessageEvent),
+    );
+    const roomEvents$ = this.roomsService.subscribeToRoomEvents(roomId);
+    return merge(roomEvents$, networkPing$);
   }
 
   @Post(':roomId/start-timer')
