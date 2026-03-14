@@ -25,6 +25,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { USER_STATS_QUEUE } from './constants/user-stats.constants';
 import { UserStatsProcessor } from './services/user-stats.processor';
 import { PresenceModule } from '@features/presence/presence.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { PresenceModule } from '@features/presence/presence.module';
       inject: [ConfigService],
     }),
     PresenceModule,
+    LeaderboardModule,
   ],
   controllers: [UsersController, FriendshipsController],
   providers: [

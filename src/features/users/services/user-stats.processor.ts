@@ -7,6 +7,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { Job } from 'bullmq';
 import { User } from '../entities';
+import { LeaderboardService } from '../leaderboard/leaderboard.service';
 
 @Processor(USER_STATS_QUEUE)
 @Injectable()
@@ -15,7 +16,10 @@ export class UserStatsProcessor extends WorkerHost {
 
   // Notice we inject DataSource instead of specific Repositories.
   // We need the raw DataSource to manually control Database Transactions!
-  constructor(private dataSource: DataSource) {
+  constructor(
+    private dataSource: DataSource,
+    private leaderboardService: LeaderboardService,
+  ) {
     super();
   }
 
@@ -112,6 +116,13 @@ export class UserStatsProcessor extends WorkerHost {
       await queryRunner.manager.save(user);
       await queryRunner.commitTransaction();
 
+      //update redis leaderboard for the gained earnedMinutes
+      if (earnedMinutes > 0) {
+        await this.leaderboardService.increamentUserState(
+          userId,
+          earnedMinutes,
+        );
+      }
       this.logger.log(
         `Successfully processed stats for user ${userId}. Earned: ${earnedMinutes}m`,
       );
