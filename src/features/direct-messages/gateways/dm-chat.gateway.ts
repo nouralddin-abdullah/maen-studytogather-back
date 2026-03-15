@@ -11,7 +11,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { DirectMessagesService } from '../services/direct-messages.service';
-import { FriendshipsService, FriendshipStatus } from '@features/friendships';
+import { FriendshipsService } from '@features/friendships';
 import { CreateMessageDto } from '../dto/create-message.dto';
 import { randomUUID } from 'crypto';
 
@@ -39,9 +39,14 @@ export class DmChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         secret: secrets.jwtSecret,
       });
 
-      client['user'] = payload;
+      client['user'] = {
+        userId: payload.sub,
+        email: payload.email,
+        username: payload.username,
+        role: payload.role,
+      };
 
-      client.join(payload.userId);
+      client.join(payload.sub);
     } catch (error) {
       client.disconnect();
     }
@@ -55,6 +60,16 @@ export class DmChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() payload: CreateMessageDto,
   ) {
     const sender = client['user'];
+    if (!sender?.userId) {
+      client.emit('dm_error', { message: 'Unauthorized socket session.' });
+      return;
+    }
+
+    if (!payload?.receiverId || !payload?.text) {
+      client.emit('dm_error', { message: 'Invalid message payload.' });
+      return;
+    }
+
     if (sender.userId === payload.receiverId) return;
 
     const friendship = await this.friendshipService.getFriendshipStatus(

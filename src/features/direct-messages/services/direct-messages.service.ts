@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DirectMessage } from '../entities/direct-message.entity';
 import { Repository } from 'typeorm';
-import { FriendshipsService, FriendshipStatus } from '@features/friendships';
+import { FriendshipsService } from '@features/friendships';
 import { CreateMessageDto } from '../dto/create-message.dto';
 import { UpdateMessageDto } from '../dto/update-message.dto';
 import { createPaginatedResponse, PaginationQuery } from '@shared/dto';
