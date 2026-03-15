@@ -1,6 +1,6 @@
 import { Expose, Type } from 'class-transformer';
 import { FriendshipStatus } from '../enums/friendship-status.enum';
-import { PublicUserDTO } from './public-user.dto';
+import { PublicUserDTO } from '@features/users/dto/public-user.dto';
 
 export class FriendshipDTO {
   @Expose()

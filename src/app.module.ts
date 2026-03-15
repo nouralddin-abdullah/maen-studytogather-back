@@ -26,6 +26,8 @@ import { BullModule } from '@nestjs/bullmq';
 import { secrets } from '@core/config';
 import { GoalsModule } from './features/goals/goals.module';
 import { PresenceModule } from './features/presence/presence.module';
+import { FriendshipsModule } from './features/friendships/friendships.module';
+import { DirectMessagesModule } from './features/direct-messages/direct-messages.module';
 
 @Module({
   imports: [
@@ -182,6 +184,8 @@ import { PresenceModule } from './features/presence/presence.module';
     HealthModule,
     GoalsModule,
     PresenceModule,
+    FriendshipsModule,
+    DirectMessagesModule,
   ],
   controllers: [AppController],
   providers: [

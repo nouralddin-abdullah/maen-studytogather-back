@@ -140,7 +140,7 @@ export class FriendshipsController {
 
   @Get('/get-status/:id')
   async getFriendshipStatus(
-    @Param(':id') targetId: string,
+    @Param('id') targetId: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return await this.friendshipsService.getFriendshipStatus(

@@ -15,3 +15,5 @@ export { UsersModule } from './users/users.module.js';
 export { HealthModule } from './health/health.module.js';
 export { MailModule } from './mail/mail.module.js';
 export { StorageModule } from './storage/storage.module.js';
+export { FriendshipsModule } from './friendships/friendships.module.js';
+export { DirectMessagesModule } from './direct-messages/direct-messages.module.js';

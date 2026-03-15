@@ -5,16 +5,13 @@ import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 
 // Controllers
 import { UsersController } from './controllers/users.controller';
-import { FriendshipsController } from './controllers/friendships.controller';
 
 // Services
 import { UsersService } from './services/users.service';
 import { AuthService } from './services/auth.service';
-import { FriendshipsService } from './services/friendships.service';
 
 // Entities
 import { User } from './entities/user.entity';
-import { Friendship } from './entities/friendship.entity';
 
 // Strategies
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -24,12 +21,11 @@ import { DailyStudyLog } from './entities/daily-study-log.entity';
 import { BullModule } from '@nestjs/bullmq';
 import { USER_STATS_QUEUE } from './constants/user-stats.constants';
 import { UserStatsProcessor } from './services/user-stats.processor';
-import { PresenceModule } from '@features/presence/presence.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, DailyStudyLog, Friendship]),
+    TypeOrmModule.forFeature([User, DailyStudyLog]),
     BullModule.registerQueue({
       name: USER_STATS_QUEUE,
     }),
@@ -44,14 +40,12 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
       }),
       inject: [ConfigService],
     }),
-    PresenceModule,
     LeaderboardModule,
   ],
-  controllers: [UsersController, FriendshipsController],
+  controllers: [UsersController],
   providers: [
     UsersService,
     AuthService,
-    FriendshipsService,
     LocalStrategy,
     JwtStrategy,
     GoogleStrategy,

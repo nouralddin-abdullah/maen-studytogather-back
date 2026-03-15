@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { User } from './user.entity';
+import { User } from '@features/users/entities/user.entity';
 import { FriendshipStatus } from '../enums/friendship-status.enum';
 
 @Entity()

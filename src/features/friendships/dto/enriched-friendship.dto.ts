@@ -1,6 +1,6 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { FriendshipDTO } from './friendship.dto';
-import { PublicUserDTO } from './public-user.dto';
+import { PublicUserDTO } from '@features/users/dto/public-user.dto';
 
 export class EnrichedFriendshipDTO extends FriendshipDTO {
   @Exclude()

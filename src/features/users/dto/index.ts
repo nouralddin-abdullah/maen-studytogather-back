@@ -5,6 +5,3 @@ export * from './user.dto';
 export * from './change-password.dto';
 export * from './forget-password.dto';
 export * from './reset-password.dto';
-export * from './friendship.dto';
-export * from './send-friend-request.dto';
-export * from './respond-friend-request.dto';
