@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   Req,
+  Res,
   Sse,
 } from '@nestjs/common';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
@@ -31,7 +32,7 @@ import { CreateRoomSwaggerDto } from '../swagger/create-room-swagger.dto';
 import { UpdateRoomDto } from '../dto/update-room.dto';
 import { JoinRoomDto } from '../dto/join-room.dto';
 import { interval, map, merge, Observable } from 'rxjs';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { UpdatePomodoroDto } from '../dto/update-pomodoro.dto';
 import { PresenceService } from '@features/presence/presence.service';
 
@@ -133,6 +134,7 @@ export class RoomsController {
 
   @Sse('sse/:roomId')
   async connectToRoom(
+    @Res() res: Response,
     @CurrentUser() user: AuthenticatedUser,
     @Param('roomId') roomId: string,
     @Req() req: Request,
@@ -143,6 +145,9 @@ export class RoomsController {
       roomName: room!.name,
       inviteCode: room!.inviteCode,
     };
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
     this.presenceService.setOnline(user.userId, roomData).catch((err) => {
       console.error(
         `[Presence] Failed to set user ${user.userId} online:`,
