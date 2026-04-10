@@ -12,11 +12,13 @@ import { USER_STATS_QUEUE } from '@features/users/constants/user-stats.constants
 import { PresenceModule } from '@features/presence/presence.module';
 import { LiveKitService } from './services/livekit.service';
 import { RoomChatGateway } from './Gateways/room.chat.gateway';
+import { RoomGateway } from './Gateways/room.gateway';
 import { JwtModule } from '@nestjs/jwt';
+import { Goal } from '@features/goals/entities/goal.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Room, StudySession]),
+    TypeOrmModule.forFeature([Room, StudySession, Goal]),
     UsersModule,
     BullModule.registerQueue(
       { name: ROOM_TIMER_QUEUE },
@@ -29,7 +31,8 @@ import { JwtModule } from '@nestjs/jwt';
     RoomsService,
     RoomTimerProcessor,
     LiveKitService,
-    RoomChatGateway,
+    RoomChatGateway, // deprecated — kept for backward compat until frontend migrates
+    RoomGateway, // new merged gateway (room events + chat) at /api/room
   ],
   controllers: [RoomsController],
   exports: [RoomsService],

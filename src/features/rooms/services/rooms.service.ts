@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Room } from '../entities/room.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { StorageService } from '@features/storage';
 import { CreateRoomDto } from '../dto/create-room.dto';
 import { randomBytes, randomUUID } from 'crypto';
@@ -35,6 +35,7 @@ import {
   UserStatsJobName,
 } from '@features/users/constants/user-stats.constants';
 import { LiveKitService } from './livekit.service';
+import { Goal } from '@features/goals/entities/goal.entity';
 
 @Injectable()
 export class RoomsService {
@@ -44,6 +45,7 @@ export class RoomsService {
     @InjectRepository(Room) private roomRepo: Repository<Room>,
     @InjectRepository(StudySession)
     private sessionRepo: Repository<StudySession>,
+    @InjectRepository(Goal) private goalRepo: Repository<Goal>,
     @InjectQueue(ROOM_TIMER_QUEUE) private roomTimerQueue: Queue,
     private storageService: StorageService,
     private userService: UsersService,
@@ -303,6 +305,26 @@ export class RoomsService {
       type: 'USER_JOINED',
       payload: newParticipant,
     });
+
+    // Replay existing goals of the joining user so already-connected clients
+    // can immediately render their full goals list (not only future updates).
+    const existingGoals = await this.goalRepo.find({
+      where: {
+        userId,
+        parentId: IsNull(),
+      },
+      relations: ['children'],
+      order: { createdAt: 'DESC' },
+    });
+
+    for (const goal of existingGoals) {
+      this.eventEmitter.emit(`room.updated.${room.id}`, {
+        type: 'USER_CREATED_GOAL',
+        payload: {
+          goal,
+        },
+      });
+    }
 
     const currentSessions = await this.sessionRepo.find({
       where: { roomId: room.id, status: StudySessionStatus.ACTIVE },
