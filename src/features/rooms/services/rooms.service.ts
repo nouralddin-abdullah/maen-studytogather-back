@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Room } from '../entities/room.entity';
-import { IsNull, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { StorageService } from '@features/storage';
 import { CreateRoomDto } from '../dto/create-room.dto';
 import { randomBytes, randomUUID } from 'crypto';
@@ -307,14 +307,10 @@ export class RoomsService {
     });
 
     // Replay existing goals of the joining user so already-connected clients
-    // can immediately render their full goals list (not only future updates).
+    // can immediately render all goals (parents + sub-goals).
     const existingGoals = await this.goalRepo.find({
-      where: {
-        userId,
-        parentId: IsNull(),
-      },
-      relations: ['children'],
-      order: { createdAt: 'DESC' },
+      where: { userId },
+      order: { createdAt: 'ASC' },
     });
 
     for (const goal of existingGoals) {
